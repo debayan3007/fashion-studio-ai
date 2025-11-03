@@ -1,5 +1,8 @@
 import fastify from 'fastify';
 import cors from '@fastify/cors';
+import { registerJwt } from './lib/jwt';
+import authRoutes from './routes/auth';
+import generationsRoutes from './routes/generations';
 
 async function buildApp() {
   const app = fastify({
@@ -12,20 +15,19 @@ async function buildApp() {
     origin: '*',
   });
 
+  // Register JWT
+  await registerJwt(app);
+
   // Health check route
   app.get('/healthz', async (_request, reply) => {
     return reply.code(200).send({ status: 'ok' });
   });
 
-  // Placeholder for auth routes
-  app.register(async () => {
-    // Auth routes will be registered here
-  }, { prefix: '/auth' });
+  // Register auth routes
+  await app.register(authRoutes, { prefix: '/auth' });
 
-  // Placeholder for generation routes
-  app.register(async () => {
-    // Generation routes will be registered here
-  }, { prefix: '/generations' });
+  // Register generation routes
+  await app.register(generationsRoutes, { prefix: '/generations' });
 
   return app;
 }
