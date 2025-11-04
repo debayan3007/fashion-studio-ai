@@ -1,9 +1,10 @@
 import fastifyJwt from '@fastify/jwt';
-import { FastifyInstance, FastifyRequest } from 'fastify';
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { config } from '../config';
 
 export async function registerJwt(app: FastifyInstance) {
   await app.register(fastifyJwt, {
-    secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+    secret: config.jwtSecret,
   });
 
   // Register authenticate method
@@ -16,8 +17,8 @@ export async function registerJwt(app: FastifyInstance) {
   });
 }
 
-export async function signJwt(app: FastifyInstance, userId: string): Promise<string> {
-  const token = await app.jwt.sign({ sub: userId }, { expiresIn: '1d' });
+export async function signJwt(reply: FastifyReply, userId: string): Promise<string> {
+  const token = await reply.jwtSign({ sub: userId }, { expiresIn: '1d' });
   return token;
 }
 

@@ -1,21 +1,39 @@
 import fastify from 'fastify';
 import cors from '@fastify/cors';
+import multipart from '@fastify/multipart';
+import fastifyStatic from '@fastify/static';
+import { join } from 'node:path';
 import { registerJwt } from './lib/jwt';
+import errorHandler from './plugins/errorHandler';
 import authRoutes from './routes/auth';
 import generationsRoutes from './routes/generations';
 
-async function buildApp() {
+export async function buildApp() {
   const app = fastify({
     bodyLimit: 5 * 1024 * 1024, // 5MB
     logger: true,
   });
 
+  // Register error handler plugin
+  app.register(errorHandler);
+
   // Register CORS plugin
-  await app.register(cors, {
+  app.register(cors, {
     origin: '*',
   });
 
-  // Register JWT
+  // Register multipart plugin
+  app.register(multipart, {
+    limits: { fileSize: 10 * 1024 * 1024, files: 1 },
+  });
+
+  // Static files
+  app.register(fastifyStatic, {
+    root: join(process.cwd(), 'public'),
+    prefix: '/static/',
+  });
+
+  // Register JWT at root scope so decorators are available to all routes
   await registerJwt(app);
 
   // Health check route
@@ -24,10 +42,10 @@ async function buildApp() {
   });
 
   // Register auth routes
-  await app.register(authRoutes, { prefix: '/auth' });
+  app.register(authRoutes, { prefix: '/auth' });
 
   // Register generation routes
-  await app.register(generationsRoutes, { prefix: '/generations' });
+  app.register(generationsRoutes, { prefix: '/generations' });
 
   return app;
 }

@@ -15,7 +15,7 @@ export default async function authRoutes(app: FastifyInstance) {
       const user = await createUser(body.email, body.password);
 
       // Sign JWT
-      const token = await signJwt(app, user.id);
+      const token = await signJwt(reply, user.id);
 
       return reply.code(201).send({ token });
     } catch (error) {
@@ -51,7 +51,7 @@ export default async function authRoutes(app: FastifyInstance) {
       const user = await verifyUser(body.email, body.password);
 
       // Sign JWT
-      const token = await signJwt(app, user.id);
+      const token = await signJwt(reply, user.id);
 
       return reply.code(200).send({ token });
     } catch (error) {
