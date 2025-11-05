@@ -28,8 +28,19 @@ export default async function generationsRoutes(app: FastifyInstance) {
 
     await new Promise((r) => setTimeout(r, 1000 + Math.random() * 1000));
 
-    // @ts-ignore - added by @fastify/jwt
-    const userId = request.user.sub || request.user.id;
+    // @ts-ignore - added by @fastify/jwt (authGuard sets request.user.id)
+    const userId = (request.user as any)?.id || (request.user as any)?.sub;
+
+    if (!userId) {
+      return reply.code(401).send({ error: 'Invalid token: no user ID' });
+    }
+
+    // Verify user exists before creating generation
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      request.log.warn({ userId, requestUser: request.user }, 'User not found when creating generation');
+      return reply.code(404).send({ error: 'User not found', userId });
+    }
 
     const gen = await prisma.generation.create({
       data: {
@@ -53,8 +64,8 @@ export default async function generationsRoutes(app: FastifyInstance) {
 
   // GET /generations
   app.get('/', { preHandler: [authGuard] }, async (request: any) => {
-    // @ts-ignore
-    const userId = request.user.sub || request.user.id;
+    // @ts-ignore - added by @fastify/jwt (authGuard sets request.user.id)
+    const userId = (request.user as any)?.id || (request.user as any)?.sub;
     const gens = await prisma.generation.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
