@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../context/AuthContext';
 import { api, type Generation, type CreateGenerationRequest, type LoginRequest, type SignupRequest, type AuthResponse } from './api';
 
 // Query keys
@@ -47,28 +48,32 @@ export function useGenerations() {
 
 // Hook to login
 export function useLogin() {
+  const { setToken } = useAuth();
+  
   return useMutation({
     mutationFn: async (data: LoginRequest): Promise<AuthResponse> => {
       const response = await api.post<AuthResponse>('/auth/login', data);
       return response.data;
     },
     onSuccess: (data) => {
-      // Store token in localStorage
-      localStorage.setItem('token', data.token);
+      // Update token in context (which also updates localStorage)
+      setToken(data.token);
     },
   });
 }
 
 // Hook to signup
 export function useSignup() {
+  const { setToken } = useAuth();
+  
   return useMutation({
     mutationFn: async (data: SignupRequest): Promise<AuthResponse> => {
       const response = await api.post<AuthResponse>('/auth/signup', data);
       return response.data;
     },
     onSuccess: (data) => {
-      // Store token in localStorage
-      localStorage.setItem('token', data.token);
+      // Update token in context (which also updates localStorage)
+      setToken(data.token);
     },
   });
 }
