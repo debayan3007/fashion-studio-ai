@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { isAxiosError } from 'axios';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
@@ -15,11 +16,15 @@ export default function Signup() {
     e.preventDefault();
     setError('');
     try {
-      const res = await api.post('/auth/signup', { email, password });
+      const res = await api.post<{ token: string }>('/auth/signup', { email, password });
       setToken(res.data.token);
       navigate('/studio');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Signup failed');
+    } catch (err: unknown) {
+      if (isAxiosError<{ message?: string }>(err)) {
+        setError(err.response?.data?.message ?? 'Signup failed');
+      } else {
+        setError('Signup failed');
+      }
     }
   };
 

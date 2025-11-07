@@ -8,11 +8,11 @@ export async function registerJwt(app: FastifyInstance) {
   });
 
   // Register authenticate method
-  app.decorate('authenticate', async (request: FastifyRequest, reply: any) => {
+  app.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      await request.jwtVerify();
-    } catch (err) {
-      reply.send(err);
+      await request.jwtVerify<{ sub: string }>();
+    } catch (error) {
+      reply.send(error);
     }
   });
 }
@@ -23,13 +23,15 @@ export async function signJwt(reply: FastifyReply, userId: string): Promise<stri
 }
 
 // Auth guard preHandler - verifies JWT and attaches user to request
-export async function authGuard(request: FastifyRequest, reply: any) {
+export async function authGuard(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
-    const decoded = await request.jwtVerify();
+    const decoded = await request.jwtVerify<{ sub: string }>();
     // Attach user object with id from JWT sub claim
-    request.user = { id: (decoded as any).sub };
-  } catch (err) {
-    return reply.code(401).send({ error: 'Unauthorized' });
+    request.user = { id: decoded.sub };
+  } catch (error) {
+    request.log.warn({ err: error }, 'JWT verification failed');
+    reply.code(401).send({ error: 'Unauthorized' });
+    return;
   }
 }
 

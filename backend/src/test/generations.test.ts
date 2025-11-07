@@ -1,8 +1,18 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import type { FastifyInstance } from 'fastify';
+import type { User } from '@prisma/client';
 import { buildApp } from '../app';
 import { createTestUser, getAuthToken, createTestGeneration, createMultipartFormData } from './helpers';
 import prisma from '../lib/prisma';
-import type { FastifyInstance } from 'fastify';
+
+type GenerationResponse = {
+  id: string;
+  prompt: string;
+  style: string;
+  imageUrl: string;
+  status: string;
+  createdAt: string;
+};
 
 describe('Generations Routes', () => {
   let app: FastifyInstance;
@@ -20,16 +30,16 @@ describe('Generations Routes', () => {
     const uniqueEmail = `generations-${Date.now()}-${Math.random().toString(36).substring(7)}@example.com`;
     
     // Retry user creation if we get database locking errors
-    let user;
+    let user: User | undefined;
     let retries = 3;
     while (retries > 0) {
       try {
         user = await createTestUser(uniqueEmail, 'password123');
         break;
-      } catch (error: any) {
-        if (error?.message?.includes('disk I/O error') && retries > 1) {
+      } catch (error: unknown) {
+        if (error instanceof Error && error.message.includes('disk I/O error') && retries > 1) {
           retries--;
-          await new Promise(resolve => setTimeout(resolve, 200));
+          await new Promise<void>((resolve) => setTimeout(resolve, 200));
           continue;
         }
         throw error;
@@ -68,10 +78,10 @@ describe('Generations Routes', () => {
             });
             createdUserIds = [];
             break;
-          } catch (error: any) {
-            if (error?.message?.includes('disk I/O error') && retries > 1) {
+          } catch (error: unknown) {
+            if (error instanceof Error && error.message.includes('disk I/O error') && retries > 1) {
               retries--;
-              await new Promise(resolve => setTimeout(resolve, 100));
+              await new Promise<void>((resolve) => setTimeout(resolve, 100));
               continue;
             }
             // If it's not a locking error or we're out of retries, ignore it
@@ -79,7 +89,7 @@ describe('Generations Routes', () => {
           }
         }
       }
-    } catch (error) {
+    } catch (_error) {
       // Ignore cleanup errors - they're not critical for test correctness
     }
   });
@@ -109,7 +119,7 @@ describe('Generations Routes', () => {
       Math.random = originalRandom;
 
       expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
+      const body = JSON.parse(response.body) as GenerationResponse;
       expect(body).toHaveProperty('id');
       expect(body).toHaveProperty('prompt', 'A beautiful summer dress');
       expect(body).toHaveProperty('style', 'casual');
@@ -151,7 +161,7 @@ describe('Generations Routes', () => {
       });
 
       expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
+      const body = JSON.parse(response.body) as { message?: string };
       expect(body).toHaveProperty('message', 'Invalid payload');
     });
 
@@ -171,7 +181,7 @@ describe('Generations Routes', () => {
       });
 
       expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
+      const body = JSON.parse(response.body) as { message?: string };
       expect(body).toHaveProperty('message', 'Invalid payload');
     });
 
@@ -212,7 +222,7 @@ describe('Generations Routes', () => {
       });
 
       expect(response.statusCode).toBe(401);
-      const body = JSON.parse(response.body);
+      const body = JSON.parse(response.body) as { error?: string };
       expect(body.error).toBe('Unauthorized');
     });
 
@@ -254,7 +264,7 @@ describe('Generations Routes', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
+      const body = JSON.parse(response.body) as GenerationResponse[];
       expect(Array.isArray(body)).toBe(true);
       expect(body.length).toBeGreaterThan(0);
       expect(body[0]).toHaveProperty('id');
@@ -278,7 +288,7 @@ describe('Generations Routes', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
+      const body = JSON.parse(response.body) as GenerationResponse[];
       expect(body.length).toBeLessThanOrEqual(5);
     });
 
@@ -292,7 +302,7 @@ describe('Generations Routes', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
+      const body = JSON.parse(response.body) as GenerationResponse[];
       if (body.length > 1) {
         const firstDate = new Date(body[0].createdAt).getTime();
         const secondDate = new Date(body[1].createdAt).getTime();
@@ -315,9 +325,9 @@ describe('Generations Routes', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
+      const body = JSON.parse(response.body) as GenerationResponse[];
       // Should not include the other user's generation
-      const otherUserGeneration = body.find((g: any) => g.prompt === 'Other user prompt');
+      const otherUserGeneration = body.find((g) => g.prompt === 'Other user prompt');
       expect(otherUserGeneration).toBeUndefined();
     });
 
@@ -328,7 +338,7 @@ describe('Generations Routes', () => {
       });
 
       expect(response.statusCode).toBe(401);
-      const body = JSON.parse(response.body);
+      const body = JSON.parse(response.body) as { error?: string };
       expect(body.error).toBe('Unauthorized');
     });
 
@@ -360,7 +370,7 @@ describe('Generations Routes', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
+      const body = JSON.parse(response.body) as GenerationResponse[];
       expect(Array.isArray(body)).toBe(true);
       expect(body.length).toBe(0);
     });
