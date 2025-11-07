@@ -57,6 +57,8 @@ describe('Studio', () => {
       isLoading: false,
       error: null,
     } as unknown as ReturnType<typeof useGenerations>);
+    localStorage.clear();
+    document.documentElement.classList.remove('dark');
   });
 
   it('should render studio page with header and logout button', () => {
