@@ -21,6 +21,7 @@ function delay(ms: number) {
 export function useGenerate() {
   const queryClient = useQueryClient();
   const [attempt, setAttempt] = useState(0);
+  const [isOutOfRetries, setIsOutOfRetries] = useState(false);
   const controllerRef = useRef<AbortController | null>(null);
 
   const mutation = useMutation({
@@ -60,6 +61,9 @@ export function useGenerate() {
           }
 
           if (!isRateLimited || attemptNumber === MAX_GENERATE_RETRIES) {
+            if (isRateLimited && attemptNumber === MAX_GENERATE_RETRIES) {
+              setIsOutOfRetries(true);
+            }
             throw error;
           }
 
@@ -75,6 +79,7 @@ export function useGenerate() {
     },
     onSettled: () => {
       setAttempt(0);
+      setIsOutOfRetries(false);
       controllerRef.current = null;
     },
   });
@@ -83,11 +88,13 @@ export function useGenerate() {
     ...mutation,
     attempt,
     isRetrying: mutation.isPending && attempt > 1,
+    isOutOfRetries,
     cancel: () => {
       controllerRef.current?.abort();
       controllerRef.current = null;
       mutation.reset();
       setAttempt(0);
+      setIsOutOfRetries(false);
     },
   };
 }

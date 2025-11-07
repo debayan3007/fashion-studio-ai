@@ -117,6 +117,12 @@ export default function Studio() {
               </p>
             )}
 
+            {generate.isOutOfRetries && !generate.isPending && (
+              <p role="alert" className="text-sm text-rose-600">
+                We hit the retry limit because of rate limiting. Please wait a moment before trying again.
+              </p>
+            )}
+
             {generate.isError && (
               <p className="text-red-500 text-sm">
                 {generate.error instanceof Error
