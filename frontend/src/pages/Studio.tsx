@@ -45,6 +45,13 @@ export default function Studio() {
   const handleRestore = (generation: Generation) => {
     setPrompt(generation.prompt);
     setStyle(generation.style);
+
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
+    setSelectedFile(null);
+    setPreviewUrl(generation.imageUrl ? `http://localhost:4000${generation.imageUrl}` : null);
   };
 
   return (
