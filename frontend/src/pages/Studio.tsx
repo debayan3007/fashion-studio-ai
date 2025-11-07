@@ -136,9 +136,32 @@ export default function Studio() {
               <button
                 onClick={handleGenerate}
                 disabled={generate.isPending || !prompt.trim() || !style.trim()}
-                className="w-full sm:w-auto flex-1 bg-slate-900 text-white py-2 rounded hover:bg-slate-800 disabled:bg-slate-400 disabled:cursor-not-allowed"
+                className="w-full sm:w-auto flex-1 bg-slate-900 text-white py-2 rounded hover:bg-slate-800 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {generate.isPending ? 'Generating...' : 'Generate'}
+                {generate.isPending && (
+                  <svg
+                    className="h-4 w-4 animate-spin"
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
+                  </svg>
+                )}
+                <span>{generate.isPending ? 'Generating...' : 'Generate'}</span>
               </button>
 
               {generate.isPending && (
