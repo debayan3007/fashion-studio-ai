@@ -87,14 +87,29 @@ export default function Studio() {
               />
             </div>
 
-            {/* Generate Button */}
-            <button
-              onClick={handleGenerate}
-              disabled={generate.isPending || !prompt.trim() || !style.trim()}
-              className="w-full bg-slate-900 text-white py-2 rounded hover:bg-slate-800 disabled:bg-slate-400 disabled:cursor-not-allowed"
-            >
-              {generate.isPending ? 'Generating...' : 'Generate'}
-            </button>
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 gap-2">
+              <button
+                onClick={handleGenerate}
+                disabled={generate.isPending || !prompt.trim() || !style.trim()}
+                className="w-full sm:w-auto flex-1 bg-slate-900 text-white py-2 rounded hover:bg-slate-800 disabled:bg-slate-400 disabled:cursor-not-allowed"
+              >
+                {generate.isPending ? 'Generating...' : 'Generate'}
+              </button>
+
+              {generate.isPending && (
+                <button
+                  type="button"
+                  onClick={generate.cancel}
+                  className="w-full sm:w-auto flex-none border border-rose-200 text-rose-600 h-10 aspect-square rounded hover:bg-rose-50 flex items-center justify-center"
+                  title="Stop generating"
+                >
+                  <span className="inline-flex h-3 w-3 items-center justify-center" aria-hidden="true">
+                    <span className="block h-full w-full rounded-sm bg-rose-500" aria-hidden="true" />
+                  </span>
+                </button>
+              )}
+            </div>
 
             {generate.isRetrying && (
               <p className="text-sm text-amber-600">

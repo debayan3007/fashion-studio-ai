@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { AxiosError } from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { api, type Generation, type CreateGenerationRequest, type LoginRequest, type SignupRequest, type AuthResponse } from './api';
@@ -21,9 +21,18 @@ function delay(ms: number) {
 export function useGenerate() {
   const queryClient = useQueryClient();
   const [attempt, setAttempt] = useState(0);
+  const controllerRef = useRef<AbortController | null>(null);
 
   const mutation = useMutation({
     mutationFn: async (data: CreateGenerationRequest): Promise<Generation> => {
+      // Cancel any in-flight request before starting a new one
+      if (controllerRef.current) {
+        controllerRef.current.abort();
+      }
+
+      const controller = new AbortController();
+      controllerRef.current = controller;
+
       const formData = new FormData();
       formData.append('prompt', data.prompt);
       formData.append('style', data.style);
@@ -38,11 +47,17 @@ export function useGenerate() {
             headers: {
               'Content-Type': 'multipart/form-data',
             },
+            signal: controller.signal,
           });
           return response.data;
         } catch (error) {
           const axiosError = error as AxiosError;
+          const isAborted = axiosError.code === 'ERR_CANCELED';
           const isRateLimited = axiosError.response?.status === 429;
+
+          if (isAborted) {
+            throw error;
+          }
 
           if (!isRateLimited || attemptNumber === MAX_GENERATE_RETRIES) {
             throw error;
@@ -60,6 +75,7 @@ export function useGenerate() {
     },
     onSettled: () => {
       setAttempt(0);
+      controllerRef.current = null;
     },
   });
 
@@ -67,6 +83,12 @@ export function useGenerate() {
     ...mutation,
     attempt,
     isRetrying: mutation.isPending && attempt > 1,
+    cancel: () => {
+      controllerRef.current?.abort();
+      controllerRef.current = null;
+      mutation.reset();
+      setAttempt(0);
+    },
   };
 }
 
