@@ -1,13 +1,14 @@
-import { FastifyInstance } from 'fastify';
-import prisma from '../lib/prisma';
+import type { FastifyInstance } from 'fastify';
 import bcrypt from 'bcrypt';
+import prisma from '../lib/prisma';
+import type { Generation, User } from '@prisma/client';
 
 const SALT_ROUNDS = 10;
 
 /**
  * Create a test user in the database with retry logic for SQLite locking issues
  */
-export async function createTestUser(email: string, password: string, retries = 3): Promise<any> {
+export async function createTestUser(email: string, password: string, retries = 3): Promise<User> {
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
   
   for (let i = 0; i < retries; i++) {
@@ -18,10 +19,10 @@ export async function createTestUser(email: string, password: string, retries = 
           passwordHash,
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If it's a disk I/O error and we have retries left, wait and retry
-      if (error?.message?.includes('disk I/O error') && i < retries - 1) {
-        await new Promise(resolve => setTimeout(resolve, 100 * (i + 1)));
+      if (error instanceof Error && error.message.includes('disk I/O error') && i < retries - 1) {
+        await new Promise<void>((resolve) => setTimeout(resolve, 100 * (i + 1)));
         continue;
       }
       throw error;
@@ -43,14 +44,17 @@ export async function getAuthToken(app: FastifyInstance, email: string, password
     },
   });
 
-  const body = JSON.parse(response.body);
+  const body = JSON.parse(response.body) as { token?: string };
+  if (!body.token) {
+    throw new Error('Token not returned from auth login');
+  }
   return body.token;
 }
 
 /**
  * Create a test generation with retry logic for SQLite locking issues
  */
-export async function createTestGeneration(userId: string, prompt: string, style: string, retries = 3) {
+export async function createTestGeneration(userId: string, prompt: string, style: string, retries = 3): Promise<Generation> {
   for (let i = 0; i < retries; i++) {
     try {
       return await prisma.generation.create({
@@ -62,10 +66,10 @@ export async function createTestGeneration(userId: string, prompt: string, style
           status: 'succeeded',
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If it's a disk I/O error and we have retries left, wait and retry
-      if (error?.message?.includes('disk I/O error') && i < retries - 1) {
-        await new Promise(resolve => setTimeout(resolve, 100 * (i + 1)));
+      if (error instanceof Error && error.message.includes('disk I/O error') && i < retries - 1) {
+        await new Promise<void>((resolve) => setTimeout(resolve, 100 * (i + 1)));
         continue;
       }
       throw error;

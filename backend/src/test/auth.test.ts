@@ -28,7 +28,7 @@ describe('Auth Routes', () => {
           },
         },
       });
-    } catch (error) {
+    } catch (_error) {
       // Ignore cleanup errors
     }
   });
