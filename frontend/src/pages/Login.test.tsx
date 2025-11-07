@@ -90,6 +90,7 @@ describe('Login', () => {
     const errorMessage = 'Invalid email or password';
 
     mockedApiPost.mockRejectedValue({
+      isAxiosError: true,
       response: {
         data: {
           message: errorMessage,
@@ -114,6 +115,7 @@ describe('Login', () => {
     const user = userEvent.setup();
 
     mockedApiPost.mockRejectedValue({
+      isAxiosError: true,
       response: {},
     });
 
@@ -133,6 +135,7 @@ describe('Login', () => {
 
     mockedApiPost
       .mockRejectedValueOnce({
+        isAxiosError: true,
         response: { data: { message: 'Error 1' } },
       })
       .mockResolvedValueOnce({

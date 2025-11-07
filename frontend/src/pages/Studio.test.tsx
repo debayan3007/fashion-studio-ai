@@ -110,7 +110,8 @@ describe('Studio', () => {
     await user.type(styleInput, 'modern');
     await user.click(generateButton);
 
-    expect(mockMutate).toHaveBeenCalledWith({
+    const [variables] = mockMutate.mock.calls[0];
+    expect(variables).toEqual({
       prompt: 'A beautiful dress',
       style: 'modern',
       image: undefined,
@@ -160,7 +161,8 @@ describe('Studio', () => {
     await user.type(styleInput, 'modern');
     await user.click(generateButton);
 
-    expect(mockMutate).toHaveBeenCalledWith({
+    const [variables] = mockMutate.mock.calls[0];
+    expect(variables).toEqual({
       prompt: 'A beautiful dress',
       style: 'modern',
       image: file,
@@ -232,7 +234,7 @@ describe('Studio', () => {
 
     renderWithProviders(<Studio />, { initialToken: 'test-token' });
 
-    const generateButton = screen.getByRole('button', { name: /generating/i });
+    const generateButton = screen.getByRole('button', { name: /^Generating/ });
     expect(generateButton).toBeDisabled();
   });
 

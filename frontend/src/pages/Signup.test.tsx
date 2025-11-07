@@ -90,6 +90,7 @@ describe('Signup', () => {
     const errorMessage = 'User already exists';
 
     mockedApiPost.mockRejectedValue({
+      isAxiosError: true,
       response: {
         data: {
           message: errorMessage,
@@ -114,6 +115,7 @@ describe('Signup', () => {
     const user = userEvent.setup();
 
     mockedApiPost.mockRejectedValue({
+      isAxiosError: true,
       response: {},
     });
 
@@ -133,6 +135,7 @@ describe('Signup', () => {
 
     mockedApiPost
       .mockRejectedValueOnce({
+        isAxiosError: true,
         response: { data: { message: 'Error 1' } },
       })
       .mockResolvedValueOnce({
