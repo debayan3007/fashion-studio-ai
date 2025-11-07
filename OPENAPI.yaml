@@ -1,0 +1,197 @@
+openapi: 3.1.0
+info:
+  title: Fashion AI API
+  version: 1.0.0
+  description: API for authentication and image generation in the Fashion AI studio.
+servers:
+  - url: http://localhost:4000
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      operationId: getHealthCheck
+      description: Returns the health status of the backend service.
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+        '500':
+          description: Unexpected error
+  /auth/signup:
+    post:
+      summary: Sign up
+      operationId: postAuthSignup
+      description: Registers a new user and returns a JWT token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Successfully created user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid request payload
+        '409':
+          description: User already exists
+        '500':
+          description: Unexpected error
+  /auth/login:
+    post:
+      summary: Login
+      operationId: postAuthLogin
+      description: Authenticates a user and returns a JWT token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Successfully authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid credentials or payload
+        '401':
+          description: Authentication failed
+        '500':
+          description: Unexpected error
+  /generations:
+    post:
+      summary: Create generation
+      operationId: postGenerations
+      description: Creates a new fashion image generation. Requires authentication.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - prompt
+                - style
+              properties:
+                prompt:
+                  type: string
+                  description: Description of the fashion item to generate.
+                  minLength: 3
+                style:
+                  type: string
+                  description: Visual style for the generation.
+                  minLength: 3
+                file:
+                  type: string
+                  format: binary
+                  description: Optional reference image to guide the generation.
+      responses:
+        '200':
+          description: Successfully created generation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Generation'
+        '400':
+          description: Invalid payload or missing multipart content
+        '401':
+          description: Unauthorized request
+        '404':
+          description: User not found
+        '429':
+          description: Model overloaded, retry later
+        '500':
+          description: Unexpected error while processing the image
+    get:
+      summary: List recent generations
+      operationId: getGenerations
+      description: Returns the 5 most recent generations for the authenticated user.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of generations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Generation'
+        '401':
+          description: Unauthorized request
+        '500':
+          description: Unexpected error
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    AuthRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          minLength: 6
+          example: password123
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT token for authenticating further requests.
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    Generation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 9d6f7a6e-9a35-4a12-b908-3b1c1c7d2e94
+        prompt:
+          type: string
+          example: A vibrant summer dress with floral patterns
+        style:
+          type: string
+          example: Bohemian
+        imageUrl:
+          type: string
+          format: uri
+          example: /static/uploads/abc123.png
+        status:
+          type: string
+          enum:
+            - succeeded
+            - pending
+            - failed
+          example: succeeded
+        createdAt:
+          type: string
+          format: date-time
+          example: 2025-03-01T12:34:56.000Z
+
