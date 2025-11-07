@@ -11,7 +11,11 @@
     "prisma:studio": "prisma studio",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "lint:fix": "npm run lint -- --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,json}\""
   },
   "keywords": [],
   "author": "",
@@ -30,7 +34,13 @@
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/node": "^24.10.0",
+    "@eslint/js": "^9.39.0",
+    "@typescript-eslint/eslint-plugin": "^8.46.3",
+    "@typescript-eslint/parser": "^8.46.3",
+    "eslint": "^9.39.0",
+    "eslint-config-prettier": "^9.1.0",
     "prisma": "^6.18.0",
+    "prettier": "^3.6.2",
     "supertest": "^7.1.4",
     "ts-node": "^10.9.2",
     "tsup": "^8.5.0",
