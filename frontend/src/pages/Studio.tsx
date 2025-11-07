@@ -96,6 +96,12 @@ export default function Studio() {
               {generate.isPending ? 'Generating...' : 'Generate'}
             </button>
 
+            {generate.isRetrying && (
+              <p className="text-sm text-amber-600">
+                Retry attempt {generate.attempt} of 3 — the service is rate limiting, please hold on…
+              </p>
+            )}
+
             {generate.isError && (
               <p className="text-red-500 text-sm">
                 {generate.error instanceof Error
