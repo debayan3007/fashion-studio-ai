@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useGenerate, useGenerations } from '../lib/hooks';
 import { useAuth } from '../context/AuthContext';
 import type { Generation } from '../lib/api';
@@ -7,6 +7,7 @@ export default function Studio() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [prompt, setPrompt] = useState('');
   const [style, setStyle] = useState('');
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { logout } = useAuth();
   const generate = useGenerate();
@@ -17,11 +18,26 @@ export default function Studio() {
       return;
     }
 
-    generate.mutate({
-      prompt: prompt.trim(),
-      style: style.trim(),
-      image: selectedFile || undefined,
-    });
+    const trimmedPrompt = prompt.trim();
+    const trimmedStyle = style.trim();
+
+    generate.mutate(
+      {
+        prompt: trimmedPrompt,
+        style: trimmedStyle,
+        image: selectedFile || undefined,
+      },
+      {
+        onSuccess: () => {
+          setPrompt('');
+          setStyle('');
+          setSelectedFile(null);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
+        },
+      },
+    );
   };
 
   const handleRestore = (generation: Generation) => {
@@ -54,6 +70,7 @@ export default function Studio() {
               <input
                 type="file"
                 accept="image/*"
+                ref={fileInputRef}
                 onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
                 className="w-full border rounded px-3 py-2"
               />
