@@ -1,0 +1,133 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Install backend dependencies
+        run: yarn install --frozen-lockfile
+        working-directory: backend
+
+      - name: Install frontend dependencies
+        run: yarn install --frozen-lockfile
+        working-directory: frontend
+
+  backend-tests:
+    runs-on: ubuntu-latest
+    needs: install
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Install backend dependencies
+        run: yarn install --frozen-lockfile
+        working-directory: backend
+
+      - name: Run backend tests
+        run: yarn --cwd backend test -- --coverage
+
+      - name: Ensure backend coverage directory
+        if: always()
+        run: |
+          if [ ! -d "backend/coverage" ]; then
+            mkdir -p backend/coverage
+            echo "Coverage data unavailable" > backend/coverage/README.txt
+          fi
+
+      - name: Upload backend coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage
+          if-no-files-found: ignore
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+    needs: install
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Install frontend dependencies
+        run: yarn install --frozen-lockfile
+        working-directory: frontend
+
+      - name: Run frontend tests
+        run: yarn --cwd frontend test -- --coverage
+
+      - name: Ensure frontend coverage directory
+        if: always()
+        run: |
+          if [ ! -d "frontend/coverage" ]; then
+            mkdir -p frontend/coverage
+            echo "Coverage data unavailable" > frontend/coverage/README.txt
+          fi
+
+      - name: Upload frontend coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage
+          if-no-files-found: ignore
+
+  upload-coverage:
+    runs-on: ubuntu-latest
+    needs:
+      - backend-tests
+      - frontend-tests
+    steps:
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*-coverage'
+          path: coverage
+          merge-multiple: true
+
+      - name: Prepare combined coverage bundle
+        run: |
+          mkdir -p coverage-bundle
+          if [ -d "coverage/backend" ]; then
+            mv coverage/backend coverage-bundle/backend
+          fi
+          if [ -d "coverage/frontend" ]; then
+            mv coverage/frontend coverage-bundle/frontend
+          fi
+
+      - name: Upload combined coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-coverage
+          path: coverage-bundle
+          if-no-files-found: ignore
+
