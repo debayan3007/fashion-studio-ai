@@ -25,6 +25,8 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
+const mockedApiPost = vi.mocked(api.post);
+
 describe('Login', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -59,7 +61,7 @@ describe('Login', () => {
     const user = userEvent.setup();
     const mockToken = 'test-token-123';
 
-    (api.post as any).mockResolvedValue({
+    mockedApiPost.mockResolvedValue({
       data: { token: mockToken },
     });
 
@@ -87,7 +89,7 @@ describe('Login', () => {
     const user = userEvent.setup();
     const errorMessage = 'Invalid email or password';
 
-    (api.post as any).mockRejectedValue({
+    mockedApiPost.mockRejectedValue({
       response: {
         data: {
           message: errorMessage,
@@ -111,7 +113,7 @@ describe('Login', () => {
   it('should display generic error message when error response has no message', async () => {
     const user = userEvent.setup();
 
-    (api.post as any).mockRejectedValue({
+    mockedApiPost.mockRejectedValue({
       response: {},
     });
 
@@ -129,7 +131,7 @@ describe('Login', () => {
   it('should clear error message on new submission', async () => {
     const user = userEvent.setup();
 
-    (api.post as any)
+    mockedApiPost
       .mockRejectedValueOnce({
         response: { data: { message: 'Error 1' } },
       })

@@ -35,21 +35,28 @@ const mockGenerations: Generation[] = [
 
 describe('Studio', () => {
   const mockMutate = vi.fn();
+  const mockedUseGenerate = vi.mocked(useGenerate);
+  const mockedUseGenerations = vi.mocked(useGenerations);
   const mockGenerateMutation = {
     mutate: mockMutate,
     isPending: false,
     isError: false,
     error: null,
-  };
+    attempt: 0,
+    isRetrying: false,
+    isOutOfRetries: false,
+    cancel: vi.fn(),
+  } as unknown as ReturnType<typeof useGenerate>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (useGenerate as any).mockReturnValue(mockGenerateMutation);
-    (useGenerations as any).mockReturnValue({
+    mockMutate.mockReset();
+    mockedUseGenerate.mockReturnValue(mockGenerateMutation);
+    mockedUseGenerations.mockReturnValue({
       data: mockGenerations,
       isLoading: false,
       error: null,
-    });
+    } as unknown as ReturnType<typeof useGenerations>);
   });
 
   it('should render studio page with header and logout button', () => {
@@ -180,11 +187,11 @@ describe('Studio', () => {
   });
 
   it('should display loading state', () => {
-    (useGenerations as any).mockReturnValue({
+    mockedUseGenerations.mockReturnValue({
       data: undefined,
       isLoading: true,
       error: null,
-    });
+    } as unknown as ReturnType<typeof useGenerations>);
 
     renderWithProviders(<Studio />, { initialToken: 'test-token' });
 
@@ -192,11 +199,11 @@ describe('Studio', () => {
   });
 
   it('should display empty state when no generations', () => {
-    (useGenerations as any).mockReturnValue({
+    mockedUseGenerations.mockReturnValue({
       data: [],
       isLoading: false,
       error: null,
-    });
+    } as unknown as ReturnType<typeof useGenerations>);
 
     renderWithProviders(<Studio />, { initialToken: 'test-token' });
 
@@ -218,10 +225,10 @@ describe('Studio', () => {
   });
 
   it('should display pending state on generate button', () => {
-    (useGenerate as any).mockReturnValue({
+    mockedUseGenerate.mockReturnValue({
       ...mockGenerateMutation,
       isPending: true,
-    });
+    } as unknown as ReturnType<typeof useGenerate>);
 
     renderWithProviders(<Studio />, { initialToken: 'test-token' });
 
@@ -230,11 +237,11 @@ describe('Studio', () => {
   });
 
   it('should display error message when generation fails', () => {
-    (useGenerate as any).mockReturnValue({
+    mockedUseGenerate.mockReturnValue({
       ...mockGenerateMutation,
       isError: true,
       error: new Error('Generation failed'),
-    });
+    } as unknown as ReturnType<typeof useGenerate>);
 
     renderWithProviders(<Studio />, { initialToken: 'test-token' });
 
