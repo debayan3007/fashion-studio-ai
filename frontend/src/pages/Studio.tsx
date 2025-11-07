@@ -5,6 +5,7 @@ import type { Generation } from '../lib/api';
 
 export default function Studio() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [prompt, setPrompt] = useState('');
   const [style, setStyle] = useState('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -32,6 +33,7 @@ export default function Studio() {
           setPrompt('');
           setStyle('');
           setSelectedFile(null);
+          setPreviewUrl(null);
           if (fileInputRef.current) {
             fileInputRef.current.value = '';
           }
@@ -71,11 +73,29 @@ export default function Studio() {
                 type="file"
                 accept="image/*"
                 ref={fileInputRef}
-                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  setSelectedFile(file);
+                  if (previewUrl) {
+                    URL.revokeObjectURL(previewUrl);
+                  }
+                  setPreviewUrl(file ? URL.createObjectURL(file) : null);
+                }}
                 className="w-full border rounded px-3 py-2"
               />
-              {selectedFile && (
-                <p className="text-sm text-slate-600 mt-1">Selected: {selectedFile.name}</p>
+              {(selectedFile || previewUrl) && (
+                <div className="mt-2 space-y-2">
+                  {selectedFile && (
+                    <p className="text-sm text-slate-600">Selected: {selectedFile.name}</p>
+                  )}
+                  {previewUrl && (
+                    <img
+                      src={previewUrl}
+                      alt="Preview of uploaded file"
+                      className="h-32 w-32 rounded object-cover border"
+                    />
+                  )}
+                </div>
               )}
             </div>
 
