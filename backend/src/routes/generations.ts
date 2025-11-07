@@ -1,4 +1,9 @@
 import { FastifyInstance } from 'fastify';
+import { randomUUID } from 'node:crypto';
+import { mkdir } from 'node:fs/promises';
+import { createWriteStream } from 'node:fs';
+import { extname, join } from 'node:path';
+import { pipeline } from 'node:stream/promises';
 import { authGuard } from '../lib/jwt';
 import { createGenerationBody } from '../schemas/generations';
 import prisma from '../lib/prisma';
@@ -23,6 +28,7 @@ export default async function generationsRoutes(app: FastifyInstance) {
     }
 
     if (Math.random() < 0.2) {
+      file.file?.resume();
       return reply.code(429).send({ message: 'Model overloaded, please retry' });
     }
 
@@ -42,12 +48,33 @@ export default async function generationsRoutes(app: FastifyInstance) {
       return reply.code(404).send({ error: 'User not found', userId });
     }
 
+    let storedImageUrl = '/static/mock.png';
+
+    if (file.filename) {
+      const uploadDir = join(process.cwd(), 'public', 'uploads');
+      await mkdir(uploadDir, { recursive: true });
+
+      const extension = extname(file.filename) || '.png';
+      const targetFileName = `${randomUUID()}${extension}`;
+      const filePath = join(uploadDir, targetFileName);
+
+      try {
+        await pipeline(file.file, createWriteStream(filePath));
+        storedImageUrl = `/static/uploads/${targetFileName}`;
+      } catch (error) {
+        request.log.error({ err: error }, 'Failed to save uploaded image');
+        return reply.code(500).send({ message: 'Failed to process uploaded image' });
+      }
+    } else {
+      file.file?.resume();
+    }
+
     const gen = await prisma.generation.create({
       data: {
         userId,
         prompt: parsed.data.prompt,
         style: parsed.data.style,
-        imageUrl: '/static/mock.png',
+        imageUrl: storedImageUrl,
         status: 'succeeded',
       },
     });
