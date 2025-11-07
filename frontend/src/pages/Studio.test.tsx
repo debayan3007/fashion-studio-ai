@@ -18,7 +18,7 @@ const mockGenerations: Generation[] = [
   {
     id: '1',
     prompt: 'A beautiful summer dress',
-    style: 'casual',
+    style: 'realistic',
     imageUrl: '/static/test1.png',
     status: 'succeeded',
     createdAt: '2024-01-01T00:00:00Z',
@@ -26,7 +26,7 @@ const mockGenerations: Generation[] = [
   {
     id: '2',
     prompt: 'Elegant evening gown',
-    style: 'formal',
+    style: 'watercolor',
     imageUrl: '/static/test2.png',
     status: 'succeeded',
     createdAt: '2024-01-02T00:00:00Z',
@@ -71,7 +71,7 @@ describe('Studio', () => {
 
     expect(screen.getByRole('heading', { name: /create new generation/i })).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/describe the fashion/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/modern, vintage, casual/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/style/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /generate/i })).toBeInTheDocument();
   });
 
@@ -89,13 +89,13 @@ describe('Studio', () => {
     renderWithProviders(<Studio />, { initialToken: 'test-token' });
 
     const promptInput = screen.getByPlaceholderText(/describe the fashion/i) as HTMLTextAreaElement;
-    const styleInput = screen.getByPlaceholderText(/modern, vintage, casual/i) as HTMLInputElement;
+    const styleSelect = screen.getByLabelText(/style/i) as HTMLSelectElement;
 
     await user.type(promptInput, 'A beautiful dress');
-    await user.type(styleInput, 'modern');
+    await user.selectOptions(styleSelect, 'realistic');
 
     expect(promptInput).toHaveValue('A beautiful dress');
-    expect(styleInput).toHaveValue('modern');
+    expect(styleSelect).toHaveValue('realistic');
   });
 
   it('should call generate mutation when form is submitted', async () => {
@@ -103,17 +103,17 @@ describe('Studio', () => {
     renderWithProviders(<Studio />, { initialToken: 'test-token' });
 
     const promptInput = screen.getByPlaceholderText(/describe the fashion/i) as HTMLTextAreaElement;
-    const styleInput = screen.getByPlaceholderText(/modern, vintage, casual/i) as HTMLInputElement;
+    const styleSelect = screen.getByLabelText(/style/i) as HTMLSelectElement;
     const generateButton = screen.getByRole('button', { name: /generate/i });
 
     await user.type(promptInput, 'A beautiful dress');
-    await user.type(styleInput, 'modern');
+    await user.selectOptions(styleSelect, 'realistic');
     await user.click(generateButton);
 
     const [variables] = mockMutate.mock.calls[0];
     expect(variables).toEqual({
       prompt: 'A beautiful dress',
-      style: 'modern',
+      style: 'realistic',
       image: undefined,
     });
   });
@@ -134,10 +134,10 @@ describe('Studio', () => {
     renderWithProviders(<Studio />, { initialToken: 'test-token' });
 
     const promptInput = screen.getByPlaceholderText(/describe the fashion/i) as HTMLTextAreaElement;
-    const styleInput = screen.getByPlaceholderText(/modern, vintage, casual/i) as HTMLInputElement;
+    const styleSelect = screen.getByLabelText(/style/i) as HTMLSelectElement;
     const generateButton = screen.getByRole('button', { name: /generate/i });
 
-    await user.type(styleInput, 'modern');
+    await user.selectOptions(styleSelect, 'realistic');
     expect(generateButton).toBeDisabled();
 
     await user.type(promptInput, 'A beautiful dress');
@@ -150,7 +150,7 @@ describe('Studio', () => {
 
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     const promptInput = screen.getByPlaceholderText(/describe the fashion/i) as HTMLTextAreaElement;
-    const styleInput = screen.getByPlaceholderText(/modern, vintage, casual/i) as HTMLInputElement;
+    const styleSelect = screen.getByLabelText(/style/i) as HTMLSelectElement;
     const generateButton = screen.getByRole('button', { name: /generate/i });
 
     // Create a mock file
@@ -158,13 +158,13 @@ describe('Studio', () => {
     await user.upload(fileInput, file);
 
     await user.type(promptInput, 'A beautiful dress');
-    await user.type(styleInput, 'modern');
+    await user.selectOptions(styleSelect, 'realistic');
     await user.click(generateButton);
 
     const [variables] = mockMutate.mock.calls[0];
     expect(variables).toEqual({
       prompt: 'A beautiful dress',
-      style: 'modern',
+      style: 'realistic',
       image: file,
     });
   });
@@ -220,10 +220,10 @@ describe('Studio', () => {
     await user.click(restoreButtons[0]);
 
     const promptInput = screen.getByPlaceholderText(/describe the fashion/i) as HTMLTextAreaElement;
-    const styleInput = screen.getByPlaceholderText(/modern, vintage, casual/i) as HTMLInputElement;
+    const styleSelect = screen.getByLabelText(/style/i) as HTMLSelectElement;
 
     expect(promptInput).toHaveValue('A beautiful summer dress');
-    expect(styleInput).toHaveValue('casual');
+    expect(styleSelect).toHaveValue('realistic');
   });
 
   it('should display pending state on generate button', () => {

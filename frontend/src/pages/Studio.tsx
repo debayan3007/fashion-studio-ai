@@ -1,7 +1,19 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useGenerate, useGenerations } from '../lib/hooks';
 import { useAuth } from '../context/AuthContext';
 import type { Generation } from '../lib/api';
+
+const STYLES = [
+  'realistic',
+  'watercolor',
+  'sketch',
+  'anime',
+  'editorial',
+] as const;
+
+function toTitleCase(value: string): string {
+  return value.toUpperCase();
+}
 
 export default function Studio() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -13,6 +25,10 @@ export default function Studio() {
   const { logout } = useAuth();
   const generate = useGenerate();
   const { data: generations, isLoading } = useGenerations();
+  const styleOptions = useMemo(
+    () => STYLES.map((option) => ({ label: toTitleCase(option), value: option })),
+    [],
+  );
 
   const handleGenerate = async () => {
     if (!prompt.trim() || !style.trim()) {
@@ -121,14 +137,25 @@ export default function Studio() {
 
             {/* Style Input */}
             <div>
-              <label className="block text-sm font-medium mb-2">Style</label>
-              <input
+              <label className="block text-sm font-medium mb-2" htmlFor="style-select">
+                Style
+              </label>
+              <select
+                id="style-select"
                 value={style}
                 onChange={(e) => setStyle(e.target.value)}
                 className="w-full border rounded px-3 py-2"
-                placeholder="e.g., modern, vintage, casual..."
                 required
-              />
+              >
+                <option value="" disabled>
+                  Select a style
+                </option>
+                {styleOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Action Buttons */}
