@@ -23,7 +23,7 @@ All code is fully typed (TypeScript strict mode) and follows a clean modular str
 Layer	Technologies
 Frontend	React 18 + TypeScript + Vite + Tailwind CSS + React Query
 Backend	Fastify + TypeScript + Prisma (SQLite) + Zod validation + JWT Auth + bcrypt
-Testing	Vitest + Supertest (backend) · React Testing Library (frontend) · Playwright (E2E)
+Testing	Vitest + Supertest (backend) · React Testing Library (frontend) · Cypress (E2E)
 CI/CD	GitHub Actions – runs tests + coverage on push/PR
 Code Quality	ESLint + Prettier + TypeScript strict
 Future AI Integration	OpenAI SDK (openai.ts)
@@ -134,11 +134,13 @@ yarn test:coverage
 yarn lint
 yarn format:check
 
-E2E
-yarn e2e
+E2E (Cypress)
+yarn test:e2e          # Headless run (uses Cypress run)
+yarn test:e2e:headed   # Interactive runner
 
-
-End-to-end tests simulate: signup → login → upload → generate → view → restore.
+End-to-end tests spin up both servers, disable the random 429 backoff, and cover:
+• Happy path: signup → login → upload → generate → view → restore
+• Error handling: UI feedback for rate-limit retries + exhausted retries alert
 
 🧠 OpenAI Integration (Enhancement Path)
 

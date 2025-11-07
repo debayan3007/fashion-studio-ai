@@ -5,10 +5,22 @@
   "main": "index.js",
   "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start:services": "concurrently -k \"cross-env NODE_ENV=test DISABLE_RATE_LIMIT=true yarn --cwd backend dev\" \"yarn --cwd frontend dev\"",
+    "cypress:run": "cypress run",
+    "cypress:open": "cypress open",
+    "test:e2e": "start-server-and-test start:services http://127.0.0.1:5173 cypress:run",
+    "test:e2e:headed": "start-server-and-test start:services http://127.0.0.1:5173 cypress:open",
+    "test": "yarn test:e2e"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "cypress": "^13.15.0",
+    "start-server-and-test": "^2.0.2",
+    "typescript": "^5.9.3"
+  }
 }

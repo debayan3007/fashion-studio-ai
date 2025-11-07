@@ -43,7 +43,7 @@ export default async function generationsRoutes(app: FastifyInstance) {
       });
     }
 
-    if (Math.random() < 0.2) {
+    if (process.env.DISABLE_RATE_LIMIT !== 'true' && Math.random() < 0.2) {
       file.file?.resume();
       reply.code(429).send({ message: 'Model overloaded, please retry' });
       return;
