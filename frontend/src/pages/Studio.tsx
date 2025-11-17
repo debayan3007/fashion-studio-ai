@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useGenerate, useGenerations } from '../lib/hooks';
 import { useAuth } from '../context/AuthContext';
 import type { Generation } from '../lib/api';
@@ -20,17 +20,6 @@ export default function Studio() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [prompt, setPrompt] = useState('');
   const [style, setStyle] = useState('');
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-
-    const storedTheme = localStorage.getItem('theme');
-    if (storedTheme === 'dark') return true;
-    if (storedTheme === 'light') return false;
-
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { logout } = useAuth();
@@ -41,20 +30,6 @@ export default function Studio() {
     [],
   );
 
-  useEffect(() => {
-    if (typeof document === 'undefined') {
-      return;
-    }
-
-    const root = document.documentElement;
-    if (isDarkMode) {
-      root.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      root.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [isDarkMode]);
 
   const handleGenerate = async () => {
     if (!prompt.trim() || !style.trim()) {
@@ -97,32 +72,15 @@ export default function Studio() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 transition-colors dark:bg-slate-900 dark:text-slate-100">
+    <div className="min-h-screen bg-slate-50 p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Fashion AI Studio</h1>
           <div className="flex items-center gap-3">
             <button
-              type="button"
-              onClick={() => setIsDarkMode((prev) => !prev)}
-              className="flex items-center gap-2 rounded border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
-              aria-pressed={isDarkMode}
-            >
-              {isDarkMode ? (
-                <span aria-hidden="true" className="text-lg">
-                  ☀️
-                </span>
-              ) : (
-                <span aria-hidden="true" className="text-lg">
-                  🌙
-                </span>
-              )}
-              <span>{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
-            </button>
-            <button
               onClick={logout}
-              className="px-4 py-2 bg-slate-200 rounded hover:bg-slate-300 transition-colors dark:bg-slate-800 dark:hover:bg-slate-700"
+              className="px-4 py-2 bg-slate-200 rounded hover:bg-slate-300 transition-colors"
             >
               Logout
             </button>
@@ -131,7 +89,7 @@ export default function Studio() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column: Generation Form */}
-          <div className="bg-white p-6 rounded shadow space-y-4 transition-colors dark:bg-slate-800">
+          <div className="bg-white p-6 rounded shadow space-y-4">
             <h2 className="text-xl font-semibold">Create New Generation</h2>
 
             {/* File Input */}
@@ -208,7 +166,7 @@ export default function Studio() {
               <button
                 onClick={handleGenerate}
                 disabled={generate.isPending || !prompt.trim() || !style.trim()}
-                className="w-full sm:w-auto flex-1 bg-slate-900 text-white py-2 rounded hover:bg-slate-800 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
+                className="w-full sm:w-auto flex-1 bg-slate-900 text-white py-2 rounded hover:bg-slate-800 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {generate.isPending && (
                   <svg
@@ -240,7 +198,7 @@ export default function Studio() {
                 <button
                   type="button"
                   onClick={generate.cancel}
-                  className="w-full sm:w-auto flex-none border border-rose-200 text-rose-600 h-10 aspect-square rounded hover:bg-rose-50 flex items-center justify-center dark:border-rose-300 dark:hover:bg-rose-200/20"
+                  className="w-full sm:w-auto flex-none border border-rose-200 text-rose-600 h-10 aspect-square rounded hover:bg-rose-50 flex items-center justify-center"
                   title="Stop generating"
                 >
                   <span className="inline-flex h-3 w-3 items-center justify-center" aria-hidden="true">
@@ -251,19 +209,19 @@ export default function Studio() {
             </div>
 
             {generate.isRetrying && (
-              <p className="text-sm text-amber-600 dark:text-amber-400">
+              <p className="text-sm text-amber-600">
                 Retry attempt {generate.attempt} of 3 — the service is rate limiting, please hold on…
               </p>
             )}
 
             {generate.isOutOfRetries && !generate.isPending && (
-              <p role="alert" className="text-sm text-rose-600 dark:text-rose-400">
+              <p role="alert" className="text-sm text-rose-600">
                 We hit the retry limit because of rate limiting. Please wait a moment before trying again.
               </p>
             )}
 
             {generate.isError && (
-              <p className="text-red-500 text-sm dark:text-red-400">
+              <p className="text-red-500 text-sm">
                 {generate.error instanceof Error
                   ? generate.error.message
                   : 'Generation failed'}
@@ -272,31 +230,31 @@ export default function Studio() {
           </div>
 
           {/* Right Column: Recent Generations */}
-          <div className="bg-white p-6 rounded shadow transition-colors dark:bg-slate-800">
+          <div className="bg-white p-6 rounded shadow">
             <h2 className="text-xl font-semibold mb-4">Recent Generations</h2>
 
             {isLoading ? (
-              <p className="text-slate-500 dark:text-slate-400">Loading...</p>
+              <p className="text-slate-500">Loading...</p>
             ) : !generations || generations.length === 0 ? (
-              <p className="text-slate-500 dark:text-slate-400">No generations yet. Create your first one!</p>
+              <p className="text-slate-500">No generations yet. Create your first one!</p>
             ) : (
               <div className="space-y-4">
                 {generations.map((generation) => (
                   <div
                     key={generation.id}
-                    className="border rounded p-4 space-y-2 hover:bg-slate-50 transition-colors dark:border-slate-700 dark:hover:bg-slate-700/60"
+                    className="border rounded p-4 space-y-2 hover:bg-slate-50 transition-colors"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <p className="font-medium">{generation.prompt}</p>
-                        <p className="text-sm text-slate-600 dark:text-slate-300">Style: {generation.style}</p>
-                        <p className="text-xs text-slate-400 mt-1 dark:text-slate-400/80">
+                        <p className="text-sm text-slate-600">Style: {generation.style}</p>
+                        <p className="text-xs text-slate-400 mt-1">
                           {new Date(generation.createdAt).toLocaleString()}
                         </p>
                       </div>
                       <button
                         onClick={() => handleRestore(generation)}
-                        className="px-3 py-1 text-sm bg-slate-200 rounded hover:bg-slate-300 transition-colors dark:bg-slate-700 dark:hover:bg-slate-600"
+                        className="px-3 py-1 text-sm bg-slate-200 rounded hover:bg-slate-300 transition-colors"
                       >
                         Restore
                       </button>
@@ -312,8 +270,8 @@ export default function Studio() {
                       <span
                         className={`px-2 py-1 rounded ${
                           generation.status === 'succeeded'
-                            ? 'bg-green-100 text-green-800 dark:bg-green-300/20 dark:text-green-300'
-                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-300/20 dark:text-yellow-300'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-yellow-100 text-yellow-800'
                         }`}
                       >
                         {generation.status}

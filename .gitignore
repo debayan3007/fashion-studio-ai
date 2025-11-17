@@ -4,6 +4,10 @@ yarn-error.log
 npm-debug.log*
 pnpm-debug.log*
 
+# Yarn
+.yarn/install-state.gz
+**/.yarn/install-state.gz
+
 # Build outputs
 dist/
 build/

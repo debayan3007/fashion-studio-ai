@@ -15,21 +15,27 @@ function getFieldValue(file: MultipartFile | undefined, field: string): string |
   return typeof value === 'string' ? value : undefined;
 }
 
-async function ensureFile(request: FastifyRequest, reply: FastifyReply): Promise<MultipartFile | undefined> {
-  const file = request.file ? await request.file() : undefined;
-  if (!file) {
-    reply.code(400).send({ message: 'Multipart form-data required' });
-    return undefined;
-  }
-  return file;
-}
-
 export default async function generationsRoutes(app: FastifyInstance) {
   // POST /generations
   app.post('/', { preHandler: [authGuard] }, async (request, reply) => {
-    const file = await ensureFile(request, reply);
-    if (!file) {
-      return;
+    const contentType = request.headers['content-type'];
+    if (!contentType || !contentType.includes('multipart/form-data')) {
+      return reply.code(400).send({ message: 'Multipart form-data required' });
+    }
+
+    // Try to get file (which also gives us access to form fields)
+    let file: MultipartFile | undefined;
+    try {
+      if (request.file) {
+        file = await request.file();
+      } else {
+        // Fastify multipart requires at least one file field for request.file() to work
+        // If no file field exists, we can't parse the form
+        return reply.code(400).send({ message: 'Multipart form-data with at least one file field required' });
+      }
+    } catch (error) {
+      request.log.error({ err: error }, 'Failed to parse multipart form');
+      return reply.code(400).send({ message: 'Failed to parse multipart form-data' });
     }
 
     const prompt = getFieldValue(file, 'prompt');

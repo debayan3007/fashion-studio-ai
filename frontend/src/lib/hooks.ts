@@ -37,8 +37,12 @@ export function useGenerate() {
       const formData = new FormData();
       formData.append('prompt', data.prompt);
       formData.append('style', data.style);
+      // Always append a file field (even if empty) - Fastify multipart requires at least one file field
       if (data.image) {
         formData.append('file', data.image);
+      } else {
+        // Append empty file field so Fastify multipart can parse the form
+        formData.append('file', new Blob([]), '');
       }
 
       for (let attemptNumber = 1; attemptNumber <= MAX_GENERATE_RETRIES; attemptNumber++) {

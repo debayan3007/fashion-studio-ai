@@ -6,6 +6,12 @@ import { AuthProvider } from './context/AuthContext';
 import App from './App.tsx';
 import './index.css';
 
+// Set light mode as default immediately before React renders
+if (typeof document !== 'undefined') {
+  document.documentElement.classList.remove('dark');
+  localStorage.setItem('theme', 'light');
+}
+
 const qc = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
