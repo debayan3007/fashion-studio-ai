@@ -127,7 +127,7 @@ describe('Generations Routes', () => {
       expect(body).toHaveProperty('status');
     }, 10000); // Increase timeout for this test
 
-    it('should return 406 if multipart form-data is missing', async () => {
+    it('should return 400 if multipart form-data is missing', async () => {
       const response = await app.inject({
         method: 'POST',
         url: '/generations',
@@ -141,8 +141,10 @@ describe('Generations Routes', () => {
         },
       });
 
-      // Fastify multipart returns 406 when content-type is not multipart
-      expect(response.statusCode).toBe(406);
+      // Route returns 400 when content-type is not multipart/form-data
+      expect(response.statusCode).toBe(400);
+      const body = JSON.parse(response.body) as { message?: string };
+      expect(body).toHaveProperty('message', 'Multipart form-data required');
     });
 
     it('should return 400 if prompt is missing', async () => {
